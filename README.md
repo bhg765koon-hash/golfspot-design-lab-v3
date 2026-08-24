@@ -1,20 +1,22 @@
 # 골프스팟 신규 UI Lab 03
 
-운영 데이터와 분리된 반응형·인터랙티브 디자인 시안 3종입니다. 같은 가명 데이터를
-사용하지만 색만 바꾸지 않고 홈, 스케줄, 회원, 스튜디오의 정보구조를 서로 다르게
-설계했습니다.
+운영 데이터와 분리된 반응형·인터랙티브 디자인 시안 3종과 추천 조합 1종입니다.
+같은 가명 데이터를 사용하지만 색만 바꾸지 않고 홈, 스케줄, 회원, 스튜디오의
+정보구조를 서로 다르게 설계했습니다.
 
 ## 바로 보기
 
 공개 비교 링크: <https://bhg765koon-hash.github.io/golfspot-design-lab-v3/>
 
-`미리보기_3종.bat`을 더블클릭하거나 `site/index.html`을 직접 엽니다.
+`미리보기_3종.bat`을 더블클릭하거나 `site/index.html`을 직접 엽니다. 기본 진입은
+`추천 조합`이며 기존 A/B/C 원안도 상단에서 그대로 비교할 수 있습니다.
 
 상단에서 다음 세 방향을 바꿀 수 있고, 각 안에서 홈·스케줄·회원·스튜디오 탭을 모두
 눌러 볼 수 있습니다.
 
 | 안 | 이름 | 주인공 | 메인 컬러 |
 |---|---|---|---|
+| R | 추천 조합 | A의 운영 홈·스케줄 + C의 회원·영상 Studio | 코발트·아쿠아·라임 |
 | A | Pulse Club | 오늘의 퍼포먼스와 다음 행동 | 일렉트릭 블루·라임·아쿠아 |
 | B | Clubhouse Edition | 회원과 레슨의 편집형 이야기 | 아이보리·미네랄 틸·코랄 |
 | C | Motion Lab | 다음 레슨과 스윙 영상 | 아쿠아·코발트·오렌지 |
@@ -28,6 +30,28 @@
 - 포인터 Spotlight, 숫자·그래프 진입 모션, 영상 진행선은 필요한 곳에만 사용합니다.
 - `prefers-reduced-motion`에서는 이동·반복 효과를 끕니다.
 - 외부 폰트, 이미지, 분석 SDK, API, 운영 DB, 영상 업로드를 사용하지 않습니다.
+
+## 추천 조합의 인터랙션
+
+- 홈의 지표와 Action Inbox가 실제 화면으로 연결되고, 레슨일지 완료 시 대기 건수와
+  운영 점수가 함께 바뀝니다. 8초 안에는 알림에서 되돌릴 수 있습니다.
+- `Ctrl/Cmd + K` 빠른 실행으로 화면, 회원, 스튜디오 작업과 레슨일지 행동을 검색합니다.
+- 회원 선택은 Studio까지 유지되며, 영상 재생·±1프레임·J/K/L·속도 전환·전후 비교
+  슬라이더·프레임 확대 렌즈를 직접 조작할 수 있습니다.
+- 뒤로가기는 URL의 `concept`와 `page` 문맥을 복원하고, 활성 메뉴·회원·제작 단계는
+  `aria-current` 또는 `aria-selected`로도 전달합니다.
+
+Magic UI의 [전체 컴포넌트](https://magicui.design/docs/components)를 검토해 운영 화면에는
+[Bento Grid](https://magicui.design/docs/components/bento-grid),
+[Magic Card](https://magicui.design/docs/components/magic-card),
+[Number Ticker](https://magicui.design/docs/components/number-ticker),
+[Animated List](https://magicui.design/docs/components/animated-list),
+[Border Beam](https://magicui.design/docs/components/border-beam),
+[Animated Beam](https://magicui.design/docs/components/animated-beam),
+[Shimmer Button](https://magicui.design/docs/components/shimmer-button), Blur Fade, Lens, Backlight,
+Ripple Button, 제한적인 Dock 동작만 역할에 맞게 재구성했습니다. React·Framer·CDN 패키지를
+추가하지 않고 현재 정적 HTML/CSS/JavaScript 안에서 구현했으며, 업무 판독을 방해하는
+Particles·Meteors·Marquee·Smooth Cursor 등은 사용하지 않았습니다.
 
 ## 참고한 원본과 적용 범위
 
@@ -60,8 +84,9 @@ cd C:\DEV\golfspot-design-lab-v3
 npm.cmd test
 ```
 
-Chrome/Edge로 3안 × 4화면 × 5폭(320/390/768/1024/1440)을 렌더합니다. 문서 가로
-넘침, JavaScript 예외, 외부 네트워크 요청, 다이얼로그·스튜디오 단계 상호작용을 검사합니다.
+Chrome/Edge로 4안 × 4화면 × 10폭(320/390/480/481/768/860/861/1080/1081/1440),
+총 160조합을 렌더합니다. 문서 가로 넘침, JavaScript 예외, 외부 네트워크 요청,
+다이얼로그·빠른 실행·회원 문맥·완료/되돌리기·영상 재생/비교·Studio 단계를 검사합니다.
 
 캡처가 필요하면 다음처럼 실행합니다.
 
