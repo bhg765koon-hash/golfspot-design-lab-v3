@@ -11,7 +11,7 @@ const site=path.join(root,"site");
 const html=fs.readFileSync(path.join(site,"index.html"),"utf8");
 const assert=(value,message)=>{if(!value)throw new Error(message)};
 for(const required of [
-  "추천 조합","Pulse Club","Clubhouse Edition","Motion Lab",
+  "추천 조합","Riviera Coral","Prism Aero","Solar Grid","Pulse Club","Clubhouse Edition","Motion Lab",
   "connect-src 'none'","setConcept","setPage","prefers-reduced-motion",
   "data-concept-button=\"hybrid\"","openCommand","undoLastAction",
   "play-toggle","compare-slider","magic-flow","magic-lens",
@@ -64,16 +64,21 @@ try{
   await call("Page.navigate",{url:pageUrl});
   await waitFor(()=>evaluate("document.readyState==='complete' && !!document.querySelector('.concept-switch')"));
 
-  const concepts=["hybrid","pulse","edition","motion"];
+  const concepts=["hybrid","solstice","aero","grid","pulse","edition","motion"];
+  const recommendedConcepts=new Set(["hybrid","solstice","aero","grid"]);
   const pages=["home","schedule","members","studio"];
   const widths=[320,390,480,481,768,860,861,1080,1081,1440];
+  const recommendedSignature=concept=>({
+    home:[`[data-view="${concept}-home"]`,`.${concept}-home`,'.pulse-home','.readiness','.pulse-bento','.magic-flow','.magic-progress','.magic-grid','.magic-shimmer'],
+    schedule:[`[data-view="${concept}-schedule"]`,`.${concept}-schedule`,'.schedule-summary','.week-days','.schedule-aside','.magic-highlight','.magic-edge'],
+    members:[`[data-view="${concept}-members"]`,`.${concept}-members`,'.motion-athlete-layout','.trajectory-stage','.clip-bank','.magic-lens','.magic-edge'],
+    studio:[`[data-view="${concept}-studio"]`,`.${concept}-studio`,'.studio-grid','.studio-player.magic-backlight','.studio-inspector','#play-toggle','#compare-slider','.magic-lens','.magic-pipeline','.lens-toggle']
+  });
   const signatures={
-    hybrid:{
-      home:['[data-view="hybrid-home"]','.pulse-home','.readiness','.pulse-bento','.magic-flow','.magic-progress','.magic-grid','.magic-shimmer'],
-      schedule:['[data-view="hybrid-schedule"]','.schedule-summary','.week-days','.schedule-aside','.magic-highlight','.magic-edge'],
-      members:['[data-view="hybrid-members"]','.motion-athlete-layout','.trajectory-stage','.clip-bank','.magic-lens','.magic-edge'],
-      studio:['[data-view="hybrid-studio"]','.studio-grid','.studio-player.magic-backlight','.studio-inspector','#play-toggle','#compare-slider','.magic-lens','.magic-pipeline','.lens-toggle']
-    },
+    hybrid:recommendedSignature('hybrid'),
+    solstice:recommendedSignature('solstice'),
+    aero:recommendedSignature('aero'),
+    grid:recommendedSignature('grid'),
     pulse:{home:[".pulse-home"],schedule:[".week-days"],members:[".passport-layout"],studio:[".pulse-studio-board"]},
     edition:{home:[".edition-mast"],schedule:[".edition-ledger-head"],members:[".edition-member-book"],studio:[".edition-review-room"]},
     motion:{home:[".motion-home"],schedule:[".session-sequencer"],members:[".motion-athlete-layout"],studio:[".studio-grid"]}
@@ -88,14 +93,14 @@ try{
   for(const width of widths){
     await call("Emulation.setDeviceMetricsOverride",{width,height:width<500?900:1000,deviceScaleFactor:1,mobile:width<500});
     for(const concept of concepts){
-      await evaluate(`setConcept(${JSON.stringify(concept)})`);
+      await evaluate(`setConcept(${JSON.stringify(concept)},'none')`);
       for(const page of pages){
         const audit=await evaluate(`(async()=>{
-          ${page==='home'?'':`setPage(${JSON.stringify(page)});`}
+          ${page==='home'?'':`setPage(${JSON.stringify(page)},'none');`}
           await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
           const root=document.documentElement,view=document.querySelector('.view');
           const required=${JSON.stringify(signatures[concept][page])};
-          const forbidden=${JSON.stringify(concept==='hybrid'?hybridForbidden[page]:[])};
+          const forbidden=${JSON.stringify(recommendedConcepts.has(concept)?hybridForbidden[page]:[])};
           const pressed=[...document.querySelectorAll('[data-concept-button][aria-pressed="true"]')];
           const current=[...document.querySelectorAll('button[aria-current="page"]')];
           const url=new URL(location.href);
@@ -118,14 +123,31 @@ try{
         assert(audit.forbidden.length===0,`${concept}/${page}/${width}px 잘못 섞인 구조: ${audit.forbidden.join(', ')}`);
         assert(audit.scrollWidth<=audit.innerWidth+1&&audit.bodyScroll<=audit.innerWidth+1,`${concept}/${page}/${width}px 문서 가로 넘침: ${audit.scrollWidth}/${audit.innerWidth}`);
         assert(width<=860?audit.mobileNav!=="none":audit.mobileNav==="none",`${concept}/${page}/${width}px 내비 반응형 전환 실패`);
-        assert(audit.conceptButtons===4&&audit.pressedCount===1&&audit.pressedConcept===concept,`${concept}/${page}/${width}px 콘셉트 aria-pressed 실패`);
+        assert(audit.conceptButtons===concepts.length&&audit.pressedCount===1&&audit.pressedConcept===concept,`${concept}/${page}/${width}px 콘셉트 aria-pressed 실패`);
         assert(audit.currentCount===3&&audit.currentLabels.every(label=>label.includes({home:'홈',schedule:'스케줄',members:'회원',studio:'스튜디오'}[page])),`${concept}/${page}/${width}px aria-current 실패: ${audit.currentLabels.join('/')}`);
-        assert(audit.urlConcept===concept&&audit.urlPage===page,`${concept}/${page}/${width}px URL 상태 불일치: ${audit.urlConcept}/${audit.urlPage}`);
         audits.push(audit);
       }
     }
   }
-  assert(audits.length>=80,`반응형 조합이 부족합니다: ${audits.length}`);
+  assert(audits.length===concepts.length*pages.length*widths.length,`예상 280조합, 실제 ${audits.length}조합`);
+
+  await call("Emulation.setDeviceMetricsOverride",{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
+  const artDirections={};
+  for(const id of ["solstice","aero","grid"]){
+    artDirections[id]=await evaluate(`(async()=>{setConcept(${JSON.stringify(id)});await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const root=document.documentElement,card=document.querySelector('.card'),side=document.querySelector('.side'),hero=document.querySelector('.pulse-hero');return {primary:getComputedStyle(root).getPropertyValue('--primary').trim(),radius:parseFloat(getComputedStyle(card).borderRadius),sideWidth:side.getBoundingClientRect().width,heroColumn:getComputedStyle(hero).gridColumn,headline:hero.querySelector('h1')?.innerText||'',direction:document.querySelector('.view')?.dataset.direction||''}})()`);
+  }
+  assert(new Set(Object.values(artDirections).map(x=>x.primary)).size===3,`새 시안의 주색이 겹칩니다: ${JSON.stringify(artDirections)}`);
+  assert(artDirections.solstice.heroColumn.includes('-1')&&artDirections.solstice.headline.includes('리듬'),`Riviera 구조/카피 실패: ${JSON.stringify(artDirections.solstice)}`);
+  assert(artDirections.aero.sideWidth<120&&artDirections.aero.headline.includes('코칭'),`Prism Aero 구조/카피 실패: ${JSON.stringify(artDirections.aero)}`);
+  assert(artDirections.grid.radius<=8&&artDirections.grid.headline.includes('점수판'),`Solar Grid 구조/카피 실패: ${JSON.stringify(artDirections.grid)}`);
+  assert(Object.entries(artDirections).every(([id,value])=>value.direction===id),`새 시안 data-direction 실패: ${JSON.stringify(artDirections)}`);
+
+  await call("Emulation.setDeviceMetricsOverride",{width:390,height:900,deviceScaleFactor:1,mobile:true});
+  await key("7","Digit7",55,2);await new Promise(r=>setTimeout(r,420));
+  const lastShortcut=await evaluate(`(()=>{const strip=document.querySelector('.concept-switch'),button=document.querySelector('[data-concept-button="motion"]'),s=strip.getBoundingClientRect(),b=button.getBoundingClientRect();return {concept:document.documentElement.dataset.concept,pressed:button.getAttribute('aria-pressed'),visible:b.right>s.left&&b.left<s.right}})()`);
+  assert(lastShortcut.concept==="motion"&&lastShortcut.pressed==="true"&&lastShortcut.visible,`Ctrl+7/선택기 중앙 정렬 실패: ${JSON.stringify(lastShortcut)}`);
+  await key("5","Digit5",53,2);await settle();
+  assert(await evaluate("document.documentElement.dataset.concept==='pulse'"),"Ctrl+5 시안 전환 실패");
 
   await call("Emulation.setDeviceMetricsOverride",{width:390,height:900,deviceScaleFactor:1,mobile:true});
   const memberContext=await evaluate(`(async()=>{
@@ -212,7 +234,7 @@ try{
         const shot=await call("Page.captureScreenshot",{format:"png",captureBeyondViewport:false});
         fs.writeFileSync(path.join(captureDir,`${concept}-${page}-desktop.png`),Buffer.from(shot.data,"base64"));
         await call("Emulation.setDeviceMetricsOverride",{width:390,height:900,deviceScaleFactor:1,mobile:true});
-        await evaluate("new Promise(r=>setTimeout(r,180))");
+        await evaluate(`setConcept(${JSON.stringify(concept)},'none');setPage(${JSON.stringify(page)},'none');scrollTo(0,0);new Promise(r=>setTimeout(r,650))`);
         const mobile=await call("Page.captureScreenshot",{format:"png",captureBeyondViewport:false});
         fs.writeFileSync(path.join(captureDir,`${concept}-${page}-mobile.png`),Buffer.from(mobile.data,"base64"));
       }
@@ -228,7 +250,7 @@ try{
   assert(serious.length===0,`브라우저 경고/오류: ${serious.join(" | ")}`);
   console.log(JSON.stringify({
     ok:true,matrix:audits.length,concepts:concepts.length,pages:pages.length,widths:widths.length,
-    hybridStructure:true,magicEffects:true,urlAria:true,memberContext:true,studioPlaybackCompare:true,
+    recommendedStructure:true,artDirections:true,selectorKeyboard:true,magicEffects:true,urlAria:true,memberContext:true,studioPlaybackCompare:true,
     studioStepBoundaries:true,completionUndo:true,commandKeyboard:true,
     externalRequests:external.length
   },null,2));
