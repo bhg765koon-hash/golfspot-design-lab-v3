@@ -6,6 +6,8 @@
 
 ## 바로 보기
 
+공개 비교 링크: <https://bhg765koon-hash.github.io/golfspot-design-lab-v3/>
+
 `미리보기_3종.bat`을 더블클릭하거나 `site/index.html`을 직접 엽니다.
 
 상단에서 다음 세 방향을 바꿀 수 있고, 각 안에서 홈·스케줄·회원·스튜디오 탭을 모두
@@ -73,4 +75,3 @@ node tests/smoke.mjs
 이 폴더는 디자인 비교본입니다. `golfspot-app` 또는 `golf_short` 운영 저장소를 수정하거나
 배포하지 않습니다. 선택된 안을 실제 서비스에 이식할 때는 기능·권한 로직을 그대로
 유지하고 CSS와 화면 렌더 구조만 단계적으로 옮겨야 합니다.
-
