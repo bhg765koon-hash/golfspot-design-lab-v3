@@ -37,7 +37,7 @@ const pageUrl=publicUrl?new URL(publicUrl).href:`http://127.0.0.1:${httpPort}/`;
 const allowedOrigin=new URL(pageUrl).origin;
 
 const profile=fs.mkdtempSync(path.join(os.tmpdir(),"golfspot-design-lab-"));
-const chrome=spawn(chromePath,["--headless=new","--disable-gpu","--disable-background-networking","--disable-component-update","--disable-default-apps","--disable-sync","--metrics-recording-only","--no-first-run","--no-sandbox","--safebrowsing-disable-auto-update",`--remote-debugging-port=${debugPort}`,`--user-data-dir=${profile}`,"about:blank"],{stdio:["ignore","ignore","pipe"]});
+const chrome=spawn(chromePath,["--headless=new","--disable-gpu","--disable-dev-shm-usage","--disable-background-networking","--disable-component-update","--disable-default-apps","--disable-sync","--metrics-recording-only","--no-first-run","--no-sandbox","--safebrowsing-disable-auto-update","--remote-allow-origins=*","--remote-debugging-address=127.0.0.1",`--remote-debugging-port=${debugPort}`,`--user-data-dir=${profile}`,"about:blank"],{stdio:["ignore","ignore","pipe"]});
 let chromeErrors="";chrome.stderr.on("data",chunk=>chromeErrors+=chunk.toString());
 let ws,call;
 try{
